@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniBAR Prompt Optimization Workbench</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #95b2c3 0%, #5c7286 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Header with controls */
+        .workbench-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .title-section h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .title-section .subtitle {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        /* Control panels */
+        .control-panel {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 200px;
+        }
+
+        .control-panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .control-group input, .control-group select, .control-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .control-group input[type="file"] {
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px dashed rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .control-group input[type="file"]:hover {
+            border-color: rgba(52, 152, 219, 0.6);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .control-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .control-group small {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .control-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.stop-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        /* Status indicators */
+        .status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .status-value.running {
+            color: #f39c12;
+            animation: pulse 2s infinite;
+        }
+
+        .status-value.completed {
+            color: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Progress bar */
+        .progress-container {
+            margin-top: 10px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Main content grid */
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .score-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .score-panel.perfect {
+            border: 2px solid #2ecc71;
+        }
+
+        .score-panel.excellent {
+            border: 2px solid #3498db;
+        }
+
+        .score-panel.good {
+            border: 2px solid #f39c12;
+        }
+
+        .score-panel.poor {
+            border: 2px solid #e74c3c;
+        }
+
+        .score-panel-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .score-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        .score-count {
+            font-size: 0.9em;
+            opacity: 0.8;
+            color: #ffffff;
+        }
+
+        .histogram-section {
+            margin-bottom: 25px;
+        }
+
+        .histogram-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .histogram-plot {
+            height: 200px;
+            margin-bottom: 15px;
+        }
+
+        .interactive-hint {
+            font-size: 0.8em;
+            opacity: 0.7;
+            text-align: center;
+            margin-top: 10px;
+            color: #ffffff;
+        }
+
+        /* DNA Analysis Panel */
+        .dna-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .dna-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dna-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #00ff00;
+        }
+
+        .dna-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            color: #ffffff;
+        }
+
+        .dna-sequence {
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid #00ff00;
+            text-align: left;
+            word-spacing: 4px;
+        }
+
+        .dna-word {
+            display: inline-block;
+            margin: 2px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            cursor: help;
+        }
+
+        .dna-word:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .dna-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.8em;
+        }
+
+        .dna-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dna-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Compact mutation notation hover tooltips */
+        .plotly .hoverlabel {
+            max-width: 300px;
+            white-space: pre-line;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+
+        /* Live update indicator */
+        .live-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 9999;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+
+        .live-dot.offline {
+            background: #e74c3c;
+            animation: none;
+        }
+
+        /* Log panel */
+        .log-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .log-entry.success {
+            color: #2ecc71;
+        }
+
+        .log-entry.error {
+            color: #e74c3c;
+        }
+
+        .log-entry.info {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Live update indicator -->
+        <div class="live-indicator">
+            <div class="live-dot" id="liveIndicator"></div>
+            <span id="liveStatus">Live Updates</span>
+        </div>
+
+        <!-- Header with controls -->
+        <div class="workbench-header">
+            <div class="header-grid">
+                <div class="title-section">
+                    <h1>OmniBAR Prompt Optimization Workbench</h1>
+                    <div class="subtitle">Real-time prompt evolution with mutation analysis</div>
+                </div>
+
+                <!-- Run controls -->
+                <div class="control-panel">
+                    <h3>🚀 New Run</h3>
+                    <div class="control-group">
+                        <label for="promptInput">Prompt to optimize:</label>
+                        <textarea id="promptInput" placeholder="Enter your prompt here...">Extract all named proteins and their source organisms from this research paper. Return your answer as a JSON object with these fields: - "proteins": list of all protein names mentioned in the document - "organisms": list of source organisms for each protein in the same order</textarea>
+                    </div>
+                    <div class="control-group">
+                        <label for="pdfInput">Source PDF Document:</label>
+                        <input type="file" id="pdfInput" accept=".pdf" onchange="handlePDFSelection()">
+                        <small style="opacity: 0.7;">Select research paper to extract proteins from</small>
+                    </div>
+                    <div class="control-group">
+                        <label for="depthInput">Exploration depth:</label>
+                        <select id="depthInput">
+                            <option value="1">Depth 1 (Quick)</option>
+                            <option value="2" selected>Depth 2 (Standard)</option>
+                            <option value="3">Depth 3 (Thorough)</option>
+                        </select>
+                    </div>
+
+                    <!-- Model Configuration -->
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="useOllama" onchange="toggleModelConfig()">
+                            🆓 Use Ollama (Free Local Models)
+                        </label>
+                    </div>
+
+                    <div class="control-group" id="apiKeyGroup">
+                        <label for="apiKeyInput">OpenAI API Key:</label>
+                        <input type="password" id="apiKeyInput" placeholder="sk-...">
+                        <small style="opacity: 0.7;">Leave empty to use .env file</small>
+                    </div>
+
+                    <div class="control-group" id="ollamaModelGroup" style="display: none;">
+                        <label for="ollamaModel">Ollama Model:</label>
+                        <select id="ollamaModel">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <small style="opacity: 0.7;">Fetched from local Ollama server</small>
+                    </div>
+
+                    <button class="btn" id="startBtn" onclick="startNewRun()">Start Optimization</button>
+                    <button class="btn stop-btn" id="stopBtn" onclick="stopRun()" disabled>Stop Run</button>
+                </div>
+
+                <!-- Database browser -->
+                <div class="control-panel">
+                    <h3>📊 Browse Runs</h3>
+                    <div class="control-group">
+                        <label for="runSelector">Select run:</label>
+                        <select id="runSelector" onchange="loadSelectedRun()">
+                            <option value="">Loading runs...</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Auto-refresh:</label>
+                        <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()"> Live mode
+                    </div>
+                    <button class="btn" onclick="refreshRuns()">Refresh Runs</button>
+                    <button class="btn" onclick="loadLatestRun()">Load Latest</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">Current Run</div>
+                <div class="status-value" id="currentRun">None</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Progress</div>
+                <div class="status-value" id="progressStatus">0 / 0</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Best Score</div>
+                <div class="status-value" id="bestScore">---</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Variations</div>
+                <div class="status-value" id="variationCount">0</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Database Size</div>
+                <div class="status-value" id="dbSize">0 runs</div>
+            </div>
+        </div>
+
+        <!-- Main visualization content -->
+        <div class="main-content" id="mainContent">
+            <div class="score-panel">
+                <div class="score-panel-header">
+                    <div class="score-title">No Data</div>
+                    <div class="score-count">Select or start a run to begin</div>
+                </div>
+                <div style="text-align: center; padding: 50px;">
+                    <p>Start a new optimization run or select an existing one from the database to view results.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log panel -->
+        <div class="log-panel">
+            <div class="log-entry info">OmniBAR Workbench initialized</div>
+            <div class="log-entry info">Ready for prompt optimization</div>
+        </div>
+
+        <footer>
+            <p>Generated by OmniBAR POW • Real-time Prompt Optimization Workbench</p>
+        </footer>
+    </div>
+
+    <script>
+        // Global state
+        let currentRunId = null;
+        let isRunning = false;
+        let autoRefreshEnabled = true;
+        let refreshInterval = null;
+        let runProcess = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWorkbench();
+        });
+
+        async function initializeWorkbench() {
+            log('Initializing workbench...', 'info');
+            await refreshRuns();
+            await loadLatestRun();
+            await loadOllamaModels();
+
+            if (autoRefreshEnabled) {
+                startAutoRefresh();
+            }
+
+            log('Workbench ready', 'success');
+        }
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const logPanel = document.querySelector('.log-panel');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+
+            // Keep only last 100 entries
+            const entries = logPanel.querySelectorAll('.log-entry');
+            if (entries.length > 100) {
+                entries[0].remove();
+            }
+        }
+
+        // Database operations
+        async function refreshRuns() {
+            try {
+                console.log('🔄 Fetching /api/runs...');
+                const response = await fetch('/api/runs');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`❌ /api/runs failed: ${response.status} ${response.statusText}`, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const runs = await response.json();
+                console.log(`✅ Fetched ${runs.length} runs from API`);
+
+                const selector = document.getElementById('runSelector');
+                const currentSelection = selector.value; // Preserve current selection
+
+                selector.innerHTML = '<option value="">Select a run...</option>';
+
+                runs.forEach(run => {
+                    const option = document.createElement('option');
+                    option.value = run.timestamp;
+                    const promptPreview = run.original_prompt.substring(0, 40) + '...';
+                    option.textContent = `${run.timestamp} - ${run.total_variations} vars - ${promptPreview}`;
+
+                    // Restore selection if it still exists
+                    if (run.timestamp === currentSelection) {
+                        option.selected = true;
+                    }
+
+                    selector.appendChild(option);
+                });
+
+                document.getElementById('dbSize').textContent = `${runs.length} runs`;
+
+                // Only log during manual refresh to avoid spam
+                if (!refreshInterval) {
+                    log(`Loaded ${runs.length} runs from database`, 'info');
+                }
+
+                return runs; // Return data for chaining
+
+            } catch (error) {
+                console.error('❌ refreshRuns error:', error);
+                log(`Error loading runs: ${error.message}`, 'error');
+                // Show offline mode
+                document.getElementById('liveIndicator').className = 'live-dot offline';
+                document.getElementById('liveStatus').textContent = 'API Offline';
+                throw error; // Re-throw for auto-refresh error handling
+            }
+        }
+
+        async function loadFromLocalFiles() {
+            // Fallback method using file system (for development)
+            try {
+                log('Attempting to load from local database...', 'info');
+                // This would need a simple API server or file watcher
+                // For now, we'll use a simulated response
+                const mockRuns = [
+                    {
+                        timestamp: '20251003_134916',
+                        total_variations: 67,
+                        created_at: '2025-10-03 13:49:16'
+                    }
+                ];
+
+                const selector = document.getElementById('runSelector');
+                selector.innerHTML = '<option value="">Select a run...</option>';
+
+                mockRuns.forEach(run => {
+                    const option = document.createElement('option');
+                    option.value = run.timestamp;
+                    option.textContent = `${run.timestamp} - ${run.total_variations} variations`;
+                    selector.appendChild(option);
+                });
+
+                document.getElementById('dbSize').textContent = `${mockRuns.length} runs`;
+
+            } catch (error) {
+                log('Could not load local files', 'error');
+            }
+        }
+
+        async function loadSelectedRun() {
+            const selector = document.getElementById('runSelector');
+            const runId = selector.value;
+
+            if (!runId) return;
+
+            await loadRun(runId);
+        }
+
+        async function loadLatestRun() {
+            try {
+                // First, refresh the runs list to get latest data
+                await refreshRuns();
+
+                const selector = document.getElementById('runSelector');
+                if (selector.options.length > 1) {
+                    selector.selectedIndex = 1; // First actual run (skip "Select a run...")
+                    await loadSelectedRun();
+                } else {
+                    console.log('No runs available to load');
+                }
+            } catch (error) {
+                console.error('Error in loadLatestRun:', error);
+                throw error; // Re-throw for auto-refresh error handling
+            }
+        }
+
+        async function loadRun(runId, isAutoRefresh = false) {
+            try {
+                if (!isAutoRefresh) {
+                    log(`Loading run ${runId}...`, 'info');
+                }
+
+                console.log(`🔄 Fetching /api/runs/${runId}...`);
+                currentRunId = runId;
+                document.getElementById('currentRun').textContent = runId;
+
+                // Load from API
+                const response = await fetch(`/api/runs/${runId}`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`❌ /api/runs/${runId} failed: ${response.status} ${response.statusText}`, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const runData = await response.json();
+                console.log(`✅ Loaded run ${runId} data:`, runData);
+
+                // Update status
+                updateStatus(runData);
+
+                // Generate visualization
+                await renderVisualization(runData);
+
+                if (!isAutoRefresh) {
+                    log(`Loaded run ${runId} successfully`, 'success');
+                }
+
+                return runData; // Return for chaining
+
+            } catch (error) {
+                console.error(`❌ loadRun(${runId}) error:`, error);
+
+                if (!isAutoRefresh) {
+                    log(`Error loading run ${runId}: ${error.message}`, 'error');
+                }
+
+                // Show error state only if not auto-refreshing
+                if (!isAutoRefresh) {
+                    const mainContent = document.getElementById('mainContent');
+                    mainContent.innerHTML = `
+                        <div class="score-panel">
+                            <div class="score-panel-header">
+                                <div class="score-title">Error Loading Run</div>
+                                <div class="score-count">${error.message}</div>
+                            </div>
+                            <div style="text-align: center; padding: 50px;">
+                                <p>❌ Could not load run data. Check API server connection.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                throw error; // Re-throw for auto-refresh error handling
+            }
+        }
+
+        async function generateVisualization(runId) {
+            // Call Python script to generate visualization
+            try {
+                log('Generating visualization with Python...', 'info');
+
+                // This would call the Python visualization script
+                // For now, we'll simulate the process
+
+                // Update UI to show we're working on it
+                document.getElementById('currentRun').textContent = runId;
+                document.getElementById('bestScore').textContent = 'Loading...';
+
+                setTimeout(() => {
+                    log('Visualization generated (simulated)', 'success');
+                    // In real implementation, this would load the generated HTML content
+                    loadMockVisualization(runId);
+                }, 1000);
+
+            } catch (error) {
+                log(`Error generating visualization: ${error.message}`, 'error');
+            }
+        }
+
+        function loadMockVisualization(runId) {
+            // Mock visualization for demonstration
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="score-panel perfect">
+                    <div class="score-panel-header">
+                        <div class="score-title">100% Score</div>
+                        <div class="score-count">67 variations</div>
+                    </div>
+                    <div class="histogram-section">
+                        <div class="histogram-title">Proteins</div>
+                        <div id="protein-perfect" class="histogram-plot"></div>
+                    </div>
+                    <div class="histogram-section">
+                        <div class="histogram-title">🦠 Organisms</div>
+                        <div id="organism-perfect" class="histogram-plot"></div>
+                    </div>
+                    <div class="interactive-hint">
+                        💡 Hover over bars to see mutation notation
+                    </div>
+                </div>
+            `;
+
+            // Update status
+            document.getElementById('bestScore').textContent = '1.000';
+            document.getElementById('variationCount').textContent = '67';
+            document.getElementById('progressStatus').textContent = '67 / 67';
+            document.getElementById('progressBar').style.width = '100%';
+
+            // Create mock histograms
+            createMockHistogram('protein-perfect', 'Proteins');
+            createMockHistogram('organism-perfect', 'Organisms');
+        }
+
+        function createMockHistogram(elementId, title) {
+            const mockData = title === 'Proteins'
+                ? ['PDZ3', 'CRIPT', 'URA3', 'RNAP', 'T7 RNAP']
+                : ['Homo sapiens', 'E. coli', 'S. cerevisiae'];
+
+            const mockCounts = mockData.map(() => Math.floor(Math.random() * 50) + 10);
+            const mockHoverText = mockData.map((item, i) =>
+                `d1_6ger (Score: 1.000)\nsource_6_root\n4p 4o`
+            );
+
+            Plotly.newPlot(elementId, [{
+                x: mockCounts,
+                y: mockData,
+                type: 'bar',
+                orientation: 'h',
+                text: mockHoverText,
+                hoverinfo: 'text',
+                marker: {
+                    color: 'rgba(46, 204, 113, 0.8)',
+                    line: {
+                        color: 'rgba(46, 204, 113, 1)',
+                        width: 1
+                    }
+                }
+            }], {
+                margin: {l: 80, r: 20, t: 20, b: 40},
+                height: 200,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {color: 'white', size: 9},
+                xaxis: {color: 'white', gridcolor: 'rgba(255,255,255,0.2)', title: 'Count'},
+                yaxis: {color: 'white'}
+            }, {
+                responsive: true,
+                displayModeBar: false,
+                hovermode: 'closest'
+            });
+        }
+
+        function updateStatus(runData) {
+            document.getElementById('bestScore').textContent = runData.best_score ? runData.best_score.toFixed(3) : '---';
+            document.getElementById('variationCount').textContent = runData.total_variations || '0';
+            document.getElementById('progressStatus').textContent = `${runData.completed || 0} / ${runData.total_variations || 0}`;
+
+            const progressPercent = runData.total_variations > 0 ? (runData.completed / runData.total_variations) * 100 : 0;
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+        }
+
+        // Ollama model loading
+        async function loadOllamaModels() {
+            try {
+                log('Fetching available Ollama models...', 'info');
+
+                const response = await fetch('http://localhost:11434/api/tags');
+                if (!response.ok) throw new Error(`Ollama server not responding`);
+
+                const data = await response.json();
+                const modelSelect = document.getElementById('ollamaModel');
+
+                // Clear existing options
+                modelSelect.innerHTML = '';
+
+                if (data.models && data.models.length > 0) {
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.name;
+                        option.textContent = `${model.name} (${formatSize(model.size)})`;
+                        modelSelect.appendChild(option);
+                    });
+
+                    log(`Found ${data.models.length} Ollama models`, 'success');
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No models installed';
+                    modelSelect.appendChild(option);
+                    log('No Ollama models found - run "ollama pull <model>" to install', 'info');
+                }
+
+            } catch (error) {
+                log(`Ollama not available: ${error.message}`, 'info');
+
+                // Fallback to static options
+                const modelSelect = document.getElementById('ollamaModel');
+                modelSelect.innerHTML = `
+                    <option value="llama3.1:latest">Llama 3.1 (8B)</option>
+                    <option value="llama3.1:70b">Llama 3.1 (70B)</option>
+                    <option value="mixtral:latest">Mixtral 8x7B</option>
+                    <option value="codellama:latest">Code Llama</option>
+                    <option value="gemma2:latest">Gemma 2</option>
+                `;
+                log('Using fallback model list', 'info');
+            }
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // PDF file handling
+        function handlePDFSelection() {
+            const pdfInput = document.getElementById('pdfInput');
+            const file = pdfInput.files[0];
+
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    log('Please select a PDF file', 'error');
+                    pdfInput.value = '';
+                    return;
+                }
+
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                log(`Selected PDF: ${file.name} (${sizeMB} MB)`, 'success');
+
+                // Store file info for later use
+                window.selectedPDF = {
+                    file: file,
+                    name: file.name,
+                    size: file.size
+                };
+            }
+        }
+
+        // Model configuration functions
+        function toggleModelConfig() {
+            const useOllama = document.getElementById('useOllama').checked;
+            const apiKeyGroup = document.getElementById('apiKeyGroup');
+            const ollamaModelGroup = document.getElementById('ollamaModelGroup');
+
+            if (useOllama) {
+                apiKeyGroup.style.display = 'none';
+                ollamaModelGroup.style.display = 'block';
+                log('Switched to Ollama mode (free local models)', 'info');
+
+                // Refresh models when switching to Ollama mode
+                loadOllamaModels();
+            } else {
+                apiKeyGroup.style.display = 'block';
+                ollamaModelGroup.style.display = 'none';
+                log('Switched to OpenAI mode', 'info');
+            }
+        }
+
+        // Run control functions
+        async function startNewRun() {
+            const promptInput = document.getElementById('promptInput');
+            const depthInput = document.getElementById('depthInput');
+            const useOllama = document.getElementById('useOllama').checked;
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const ollamaModel = document.getElementById('ollamaModel');
+            const pdfInput = document.getElementById('pdfInput');
+
+            if (!promptInput.value.trim()) {
+                log('Please enter a prompt to optimize', 'error');
+                return;
+            }
+
+            if (!pdfInput.files[0]) {
+                log('Please select a PDF document to analyze', 'error');
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            const modelInfo = useOllama
+                ? `Ollama ${ollamaModel.value}`
+                : `OpenAI (${apiKeyInput.value.trim() ? 'custom key' : '.env key'})`;
+
+            log(`Starting new run: depth ${depthInput.value}, model: ${modelInfo}`, 'info');
+            log(`Prompt: ${promptInput.value.trim().substring(0, 50)}...`, 'info');
+            log(`PDF: ${pdfInput.files[0].name}`, 'info');
+
+            try {
+                // Call Python script to start run with PDF
+                const runId = await callPythonRunnerWithPDF();
+
+                // Start monitoring progress
+                await startRunMonitoring(runId);
+
+            } catch (error) {
+                log(`Error starting run: ${error.message}`, 'error');
+                stopRun();
+            }
+        }
+
+        async function callPythonRunnerWithPDF() {
+            log('Starting Python prompt refiner with PDF...', 'info');
+
+            try {
+                const promptInput = document.getElementById('promptInput');
+                const depthInput = document.getElementById('depthInput');
+                const useOllama = document.getElementById('useOllama').checked;
+                const apiKeyInput = document.getElementById('apiKeyInput');
+                const ollamaModel = document.getElementById('ollamaModel');
+                const pdfInput = document.getElementById('pdfInput');
+
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('prompt', promptInput.value.trim());
+                formData.append('depth', depthInput.value);
+                formData.append('timestamp', new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '_'));
+                formData.append('useOllama', useOllama);
+                formData.append('apiKey', useOllama ? '' : apiKeyInput.value.trim());
+                formData.append('ollamaModel', useOllama ? ollamaModel.value : '');
+                formData.append('pdf', pdfInput.files[0]);
+
+                const response = await fetch('/api/start-run', {
+                    method: 'POST',
+                    body: formData  // No Content-Type header - browser sets it automatically for FormData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                log(`Run started with ID: ${result.runId}`, 'success');
+                return result.runId;
+
+            } catch (error) {
+                log(`Error starting run: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function callPythonRunner(config) {
+            log('Starting Python prompt refiner...', 'info');
+
+            try {
+                const response = await fetch('/api/start-run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                log(`Run started with ID: ${result.runId}`, 'success');
+                return result.runId;
+
+            } catch (error) {
+                log(`Error starting run: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        function simulateRun(config) {
+            // Simulate a running process for demonstration
+            let progress = 0;
+            const total = Math.pow(5, config.depth) * 2; // Rough estimate
+
+            const simulator = setInterval(() => {
+                progress += Math.random() * 3 + 1;
+
+                if (progress >= total) {
+                    progress = total;
+                    clearInterval(simulator);
+                    log('Simulated run completed', 'success');
+                    stopRun();
+                }
+
+                // Update UI
+                document.getElementById('progressStatus').textContent = `${Math.floor(progress)} / ${total}`;
+                document.getElementById('progressBar').style.width = `${(progress / total) * 100}%`;
+
+                // Simulate finding better scores
+                if (Math.random() > 0.7) {
+                    const score = (0.8 + Math.random() * 0.2).toFixed(3);
+                    document.getElementById('bestScore').textContent = score;
+                    log(`New best score: ${score}`, 'success');
+                }
+
+            }, 1000);
+
+            // Store for cleanup
+            runProcess = simulator;
+        }
+
+        async function startRunMonitoring(runId) {
+            currentRunId = runId;
+            document.getElementById('currentRun').textContent = runId;
+            document.getElementById('currentRun').className = 'status-value running';
+
+            log(`Monitoring run ${runId}`, 'info');
+
+            // Start real-time monitoring
+            const monitorInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/status/${runId}`);
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            log(`Run ${runId} not found, stopping monitoring`, 'error');
+                            clearInterval(monitorInterval);
+                            return;
+                        }
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const status = await response.json();
+
+                    // Update progress
+                    if (status.total > 0) {
+                        const progress = (status.current_variation / status.total) * 100;
+                        document.getElementById('progressStatus').textContent = `${status.current_variation} / ${status.total}`;
+                        document.getElementById('progressBar').style.width = `${progress}%`;
+                    }
+
+                    // Update best score
+                    if (status.best_score > 0) {
+                        document.getElementById('bestScore').textContent = status.best_score.toFixed(3);
+                    }
+
+                    // Check if completed or failed
+                    if (status.status === 'completed') {
+                        log(`Run ${runId} completed successfully`, 'success');
+                        clearInterval(monitorInterval);
+                        stopRun();
+
+                        // Auto-load the completed run
+                        await loadRun(runId);
+
+                    } else if (status.status === 'failed' || status.status === 'stopped') {
+                        log(`Run ${runId} ${status.status}`, 'error');
+                        clearInterval(monitorInterval);
+                        stopRun();
+                    }
+
+                } catch (error) {
+                    log(`Error monitoring run: ${error.message}`, 'error');
+                    // Continue monitoring, might be temporary issue
+                }
+
+            }, 2000); // Check every 2 seconds
+
+            // Store interval for cleanup
+            runProcess = monitorInterval;
+        }
+
+        function stopRun() {
+            isRunning = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('currentRun').className = 'status-value completed';
+
+            if (runProcess) {
+                clearInterval(runProcess);
+                runProcess = null;
+            }
+
+            log('Run stopped', 'info');
+        }
+
+        // Auto-refresh functionality
+        function toggleAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+            autoRefreshEnabled = checkbox.checked;
+
+            if (autoRefreshEnabled) {
+                // Reset fail count when manually enabling
+                autoRefreshFailCount = 0;
+                startAutoRefresh();
+                log('Auto-refresh enabled', 'info');
+            } else {
+                stopAutoRefresh();
+                log('Auto-refresh disabled', 'info');
+            }
+        }
+
+        let autoRefreshFailCount = 0;
+        const MAX_REFRESH_FAILS = 3;
+
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+
+            refreshInterval = setInterval(async () => {
+                try {
+                    console.log('🔄 Auto-refresh starting...');
+
+                    // Just call the same function that "Load Latest" button uses
+                    await loadLatestRun();
+
+                    // Reset fail count on success
+                    autoRefreshFailCount = 0;
+
+                    // Update live indicator
+                    const indicator = document.getElementById('liveIndicator');
+                    const status = document.getElementById('liveStatus');
+                    indicator.className = 'live-dot';
+                    status.textContent = 'Live Updates';
+
+                    console.log('✅ Auto-refresh completed successfully');
+
+                } catch (error) {
+                    autoRefreshFailCount++;
+                    console.error(`❌ Auto-refresh error (${autoRefreshFailCount}/${MAX_REFRESH_FAILS}):`, error);
+
+                    // Update live indicator to show error
+                    const indicator = document.getElementById('liveIndicator');
+                    const status = document.getElementById('liveStatus');
+                    indicator.className = 'live-dot offline';
+
+                    if (autoRefreshFailCount >= MAX_REFRESH_FAILS) {
+                        status.textContent = 'Auto-refresh disabled';
+                        console.warn(`🛑 Auto-refresh disabled after ${MAX_REFRESH_FAILS} consecutive failures`);
+                        clearInterval(refreshInterval);
+                        refreshInterval = null;
+
+                        // Show warning to user
+                        log(`Auto-refresh stopped after ${MAX_REFRESH_FAILS} failures. Check API server.`, 'error');
+                    } else {
+                        status.textContent = `Update Error (${autoRefreshFailCount})`;
+                    }
+                }
+
+            }, 5000); // Every 5 seconds as requested
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            // Update live indicator
+            const indicator = document.getElementById('liveIndicator');
+            const status = document.getElementById('liveStatus');
+            indicator.className = 'live-dot offline';
+            status.textContent = 'Updates Paused';
+        }
+
+        // Visualization rendering functions
+        async function renderVisualization(runData) {
+            try {
+                log('Rendering visualization...', 'info');
+
+                // Validate input data
+                if (!runData) {
+                    throw new Error('No run data provided');
+                }
+
+                const segmentedData = runData.segmented_data || {};
+                const originalPrompt = runData.original_prompt || '';
+
+                console.log('Rendering with data:', {
+                    variationCount: runData.variations?.length || 0,
+                    segmentedDataKeys: Object.keys(segmentedData),
+                    originalPromptLength: originalPrompt.length
+                });
+
+                // Generate DNA Analysis first
+                const dnaAnalysis = generateDNAVisualization(runData);
+
+                // Generate HTML for score panels
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = dnaAnalysis + generateScorePanelsHTML(segmentedData);
+
+            // Create histograms for each panel
+            const panelColors = {
+                'perfect': 'rgba(46, 204, 113, 0.8)',
+                'excellent': 'rgba(52, 152, 219, 0.8)',
+                'good': 'rgba(243, 156, 18, 0.8)',
+                'poor': 'rgba(231, 76, 60, 0.8)'
+            };
+
+            Object.keys(segmentedData).forEach(panelKey => {
+                const panelData = segmentedData[panelKey];
+                if (panelData.count === 0) return;
+
+                const color = panelColors[panelKey];
+
+                // Create protein histogram
+                const proteinLabels = Object.keys(panelData.protein_histogram);
+                const proteinValues = Object.values(panelData.protein_histogram);
+                const proteinHoverText = createHoverText(panelData.variations, 'protein', proteinLabels, originalPrompt);
+
+                if (proteinLabels.length > 0) {
+                    createHistogram(`protein-${panelKey}`, proteinValues, proteinLabels, proteinHoverText, color);
+                }
+
+                // Create organism histogram
+                const organismLabels = Object.keys(panelData.organism_histogram);
+                const organismValues = Object.values(panelData.organism_histogram);
+                const organismHoverText = createHoverText(panelData.variations, 'organism', organismLabels, originalPrompt);
+
+                if (organismLabels.length > 0) {
+                    createHistogram(`organism-${panelKey}`, organismValues, organismLabels, organismHoverText, color);
+                }
+            });
+
+                log('Visualization with DNA analysis rendered successfully', 'success');
+
+            } catch (error) {
+                console.error('Error rendering visualization:', error);
+                log(`Error rendering visualization: ${error.message}`, 'error');
+
+                // Show error state in UI
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="score-panel">
+                        <div class="score-panel-header">
+                            <div class="score-title">Visualization Error</div>
+                            <div class="score-count">${error.message}</div>
+                        </div>
+                        <div style="text-align: center; padding: 50px;">
+                            <p>❌ Error rendering visualization. Check console for details.</p>
+                            <p>Run data may be corrupted for this run.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateScorePanelsHTML(segmentedData) {
+            let html = '';
+            const panelOrder = ['perfect', 'excellent', 'good', 'poor'];
+
+            panelOrder.forEach(panelKey => {
+                const panelData = segmentedData[panelKey];
+                if (!panelData || panelData.count === 0) return;
+
+                html += `
+                    <div class="score-panel ${panelKey}">
+                        <div class="score-panel-header">
+                            <div class="score-title">${panelData.label}</div>
+                            <div class="score-count">${panelData.count} variations</div>
+                        </div>
+
+                        <div class="histogram-section">
+                            <div class="histogram-title">Proteins</div>
+                            <div id="protein-${panelKey}" class="histogram-plot"></div>
+                        </div>
+
+                        <div class="histogram-section">
+                            <div class="histogram-title">🦠 Organisms</div>
+                            <div id="organism-${panelKey}" class="histogram-plot"></div>
+                        </div>
+
+                        <div class="interactive-hint">
+                            💡 Hover over bars to see mutation notation
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html || '<div class="score-panel"><div class="score-panel-header"><div class="score-title">No Data</div></div></div>';
+        }
+
+        function createHistogram(elementId, values, labels, hoverText, color) {
+            Plotly.newPlot(elementId, [{
+                x: values,
+                y: labels,
+                type: 'bar',
+                orientation: 'h',
+                text: labels, // Show labels as text inside bars
+                textposition: 'inside',
+                textfont: {
+                    color: 'white',
+                    size: 10,
+                    family: 'Arial, sans-serif'
+                },
+                customdata: hoverText, // Store hover text separately
+                hovertemplate: '%{customdata}<extra></extra>', // Use custom hover
+                marker: {
+                    color: color,
+                    line: {
+                        color: color.replace('0.8', '1'),
+                        width: 1
+                    }
+                }
+            }], {
+                margin: {l: 20, r: 20, t: 20, b: 40}, // Reduced left margin since no y-axis labels
+                height: 200,
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: {color: 'white', size: 9},
+                xaxis: {color: 'white', gridcolor: 'rgba(255,255,255,0.2)', title: 'Count'},
+                yaxis: {
+                    color: 'white',
+                    showticklabels: false, // Hide y-axis labels since they're now inside bars
+                    showgrid: false
+                }
+            }, {
+                responsive: true,
+                displayModeBar: false,
+                hovermode: 'closest'
+            });
+        }
+
+        // DNA Analysis - Word Impact Analysis
+        function analyzeWordImpact(variations, originalPrompt) {
+            // Defensive checks
+            if (!originalPrompt || typeof originalPrompt !== 'string') {
+                console.warn('Invalid originalPrompt for word impact analysis:', originalPrompt);
+                return [];
+            }
+
+            if (!Array.isArray(variations) || variations.length === 0) {
+                console.warn('Invalid variations for word impact analysis:', variations);
+                return [];
+            }
+
+            const originalWords = originalPrompt.split(' ');
+            const wordImpacts = new Map();
+
+            // Initialize word impacts
+            originalWords.forEach((word, index) => {
+                wordImpacts.set(index, {
+                    word: word,
+                    originalScores: [], // Scores when word stays the same
+                    mutationScores: [], // Scores when word is changed
+                    mutations: [],
+                    position: index
+                });
+            });
+
+            // Analyze each variation
+            variations.forEach(variation => {
+                // Defensive checks for variation data
+                if (!variation || typeof variation.prompt !== 'string') {
+                    console.warn('Invalid variation data:', variation);
+                    return; // Skip this variation
+                }
+
+                const varWords = variation.prompt.split(' ');
+                const score = typeof variation.overall === 'number' ? variation.overall : 0;
+
+                // Compare each position
+                originalWords.forEach((origWord, index) => {
+                    const varWord = varWords[index] || '';
+                    const impact = wordImpacts.get(index);
+
+                    if (origWord === varWord) {
+                        // Same word - track baseline performance
+                        impact.originalScores.push(score);
+                    } else {
+                        // Different word - track mutation performance
+                        impact.mutationScores.push(score);
+                        impact.mutations.push({ word: varWord, score: score });
+                    }
+                });
+            });
+
+            // Calculate impact analysis
+            const analysisResults = [];
+            wordImpacts.forEach((impact, index) => {
+                // Calculate average scores for original vs mutations
+                const originalAvg = impact.originalScores.length > 0
+                    ? impact.originalScores.reduce((a, b) => a + b, 0) / impact.originalScores.length
+                    : 0;
+
+                const mutationAvg = impact.mutationScores.length > 0
+                    ? impact.mutationScores.reduce((a, b) => a + b, 0) / impact.mutationScores.length
+                    : originalAvg; // Fallback to original if no mutations
+
+                // Impact is how much mutations help/hurt compared to keeping original
+                const impactScore = mutationAvg - originalAvg;
+
+                // Find best mutation
+                const bestMutation = impact.mutations.length > 0
+                    ? impact.mutations.reduce((best, mut) => mut.score > best.score ? mut : best, impact.mutations[0])
+                    : null;
+
+                analysisResults.push({
+                    word: impact.word,
+                    position: index,
+                    originalAvg: originalAvg,
+                    mutationAvg: mutationAvg,
+                    impact: impactScore, // Positive = mutations help, negative = mutations hurt
+                    bestMutation: bestMutation,
+                    mutationCount: impact.mutations.length,
+                    originalCount: impact.originalScores.length
+                });
+            });
+
+            return analysisResults;
+        }
+
+        function generateDNAVisualization(runData) {
+            try {
+                const variations = runData.variations || [];
+                const originalPrompt = runData.original_prompt || '';
+
+                if (variations.length === 0) return '<div class="dna-panel"><div class="dna-header"><div class="dna-title">🧬 DNA Analysis</div><div class="dna-subtitle">No variations available</div></div></div>';
+
+                if (!originalPrompt || typeof originalPrompt !== 'string') {
+                    return '<div class="dna-panel"><div class="dna-header"><div class="dna-title">🧬 DNA Analysis</div><div class="dna-subtitle">Invalid prompt data</div></div></div>';
+                }
+
+                // Find the best performing variation
+                const validVariations = variations.filter(v => v && typeof v.prompt === 'string');
+                if (validVariations.length === 0) {
+                    return '<div class="dna-panel"><div class="dna-header"><div class="dna-title">🧬 DNA Analysis</div><div class="dna-subtitle">No valid variations found</div></div></div>';
+                }
+
+                const bestVariation = validVariations.reduce((best, curr) =>
+                    (curr.overall || 0) > (best.overall || 0) ? curr : best, validVariations[0]);
+
+                // Analyze word impacts
+                const wordAnalysis = analyzeWordImpact(validVariations, originalPrompt);
+
+            // Generate DNA sequence HTML
+            let dnaSequence = '';
+            const bestPromptWords = bestVariation.prompt.split(' ');
+
+            bestPromptWords.forEach((word, index) => {
+                const analysis = wordAnalysis[index] || {
+                    impact: 0,
+                    mutationCount: 0,
+                    originalAvg: 0,
+                    mutationAvg: 0
+                };
+
+                const impact = analysis.impact;
+                const importance = Math.abs(impact);
+
+                // Determine color based on impact (more sensitive thresholds)
+                let color, bgColor;
+                if (impact > 0.02) {
+                    // Beneficial mutation (mutations help performance)
+                    const intensity = Math.min(importance * 10, 1); // More sensitive scaling
+                    color = '#ffffff';
+                    bgColor = `rgba(0, 255, 0, ${0.4 + intensity * 0.6})`;
+                } else if (impact < -0.02) {
+                    // Harmful mutation (mutations hurt performance)
+                    const intensity = Math.min(importance * 10, 1); // More sensitive scaling
+                    color = '#ffffff';
+                    bgColor = `rgba(255, 0, 0, ${0.4 + intensity * 0.6})`;
+                } else {
+                    // Neutral (little difference between original and mutations)
+                    color = '#cccccc';
+                    bgColor = 'rgba(128, 128, 128, 0.3)';
+                }
+
+                // Determine size based on importance (more sensitive)
+                const minSize = 0.85;
+                const maxSize = 1.5;
+                const size = minSize + (importance * 20 * (maxSize - minSize)); // More sensitive scaling
+
+                const tooltip = `Word: "${word}"\\nImpact: ${impact > 0 ? '+' : ''}${impact.toFixed(3)}\\nOriginal avg: ${analysis.originalAvg?.toFixed(3) || 'N/A'}\\nMutation avg: ${analysis.mutationAvg?.toFixed(3) || 'N/A'}\\nMutations tested: ${analysis.mutationCount}`;
+
+                dnaSequence += `<span class="dna-word"
+                    style="color: ${color}; background-color: ${bgColor}; font-size: ${size}em;"
+                    title="${tooltip}">${word}</span> `;
+            });
+
+            return `
+                <div class="dna-panel">
+                    <div class="dna-header">
+                        <div class="dna-title">🧬 DNA Analysis: Optimal Prompt</div>
+                        <div class="dna-subtitle">
+                            Best Score: ${bestVariation.overall?.toFixed(3) || 'N/A'} |
+                            Mutations Tested: ${variations.length}
+                        </div>
+                    </div>
+                    <div class="dna-sequence">${dnaSequence}</div>
+                    <div class="dna-legend">
+                        <div class="dna-legend-item">
+                            <div class="dna-legend-color" style="background-color: rgba(0, 255, 0, 0.7);"></div>
+                            <span>Beneficial Mutations</span>
+                        </div>
+                        <div class="dna-legend-item">
+                            <div class="dna-legend-color" style="background-color: rgba(255, 0, 0, 0.7);"></div>
+                            <span>Harmful Mutations</span>
+                        </div>
+                        <div class="dna-legend-item">
+                            <div class="dna-legend-color" style="background-color: rgba(128, 128, 128, 0.5);"></div>
+                            <span>Neutral Words</span>
+                        </div>
+                        <div class="dna-legend-item">
+                            <span style="font-size: 1.2em;">📏</span>
+                            <span>Size = Impact Magnitude</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            } catch (error) {
+                console.error('Error generating DNA visualization:', error);
+                return `<div class="dna-panel">
+                    <div class="dna-header">
+                        <div class="dna-title">🧬 DNA Analysis</div>
+                        <div class="dna-subtitle">Error: ${error.message}</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        <p>❌ Could not analyze word impacts</p>
+                    </div>
+                </div>`;
+            }
+        }
+
+        // Function to create compact mutation notation hover text
+        function createHoverText(variations, entity, entityList, originalPrompt) {
+            // Defensive checks
+            if (!originalPrompt || typeof originalPrompt !== 'string') {
+                console.warn('Invalid originalPrompt for hover text:', originalPrompt);
+                return entityList.map(() => 'Invalid prompt data');
+            }
+
+            if (!Array.isArray(entityList) || entityList.length === 0) {
+                return [];
+            }
+
+            const originalWords = originalPrompt.split(' ');
+
+            return entityList.map(item => {
+                const relevantVars = variations.filter(v => {
+                    try {
+                        // Defensive check: ensure the property exists and is an array
+                        const entityData = entity === 'protein' ? v.proteins : v.organisms;
+                        return Array.isArray(entityData) && entityData.includes(item);
+                    } catch (error) {
+                        console.warn(`Error filtering variation for ${entity}:`, error, v);
+                        return false; // Skip this variation if there's an error
+                    }
+                });
+
+                const hoverContent = relevantVars.map(v => {
+                    // Defensive access to prevent errors
+                    const proteinCount = Array.isArray(v.proteins) ? v.proteins.length : 0;
+                    const organismCount = Array.isArray(v.organisms) ? v.organisms.length : 0;
+
+                    // Create compact mutation notation
+                    let mutations = '';
+                    if (v.prompt === originalPrompt) {
+                        mutations = 'ORIGINAL';
+                    } else {
+                        const varWords = v.prompt.split(' ');
+                        const mutationList = [];
+
+                        // Find mutations (word-by-word comparison)
+                        const maxLength = Math.max(originalWords.length, varWords.length);
+                        for (let i = 0; i < maxLength; i++) {
+                            const origWord = originalWords[i] || '';
+                            const varWord = varWords[i] || '';
+
+                            if (origWord !== varWord) {
+                                if (varWord === '') {
+                                    mutationList.push(`${origWord}_${i+1}_DEL`);  // deletion
+                                } else if (origWord === '') {
+                                    mutationList.push(`INS_${i+1}_${varWord}`);   // insertion
+                                } else {
+                                    mutationList.push(`${origWord}_${i+1}_${varWord}`);  // substitution
+                                }
+                            }
+                        }
+
+                        // Limit to 2 most significant mutations to keep it short
+                        mutations = mutationList.slice(0, 2).join(',') + (mutationList.length > 2 ? '...' : '');
+                        if (mutations === '') mutations = 'IDENTICAL';
+                    }
+
+                    return [
+                        `${v.id} (Score: ${v.overall.toFixed(3)})`,
+                        `${mutations}`,
+                        `${proteinCount}p ${organismCount}o`
+                    ].join('\n');
+                });
+
+                return hoverContent.join('\n\n');
+            });
+        }
+
+        // Initialize workbench when page loads
+        window.addEventListener('load', initializeWorkbench);
+    </script>
+</body>
+</html>

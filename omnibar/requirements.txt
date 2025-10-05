@@ -1,0 +1,7 @@
+langchain
+langchain_core
+langchain_openai
+numpy
+pydantic==2.10.6
+rich
+tqdm
