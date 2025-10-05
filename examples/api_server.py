@@ -12,6 +12,7 @@ import subprocess
 import threading
 import time
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
@@ -277,8 +278,10 @@ class OmniBarAPIServer:
                     return jsonify({'error': 'Run already in progress'}), 409
 
                 # Build command based on model configuration - use absolute paths
+                # Use the same Python executable that's running this server
+                python_exe = sys.executable
                 cmd = [
-                    'python', 'prompt_refiner_pydantic.py',
+                    python_exe, 'prompt_refiner_pydantic.py',
                     '--prompt', prompt,
                     '--depth', str(depth),
                     '--pdf', str(pdf_path.absolute())
@@ -309,12 +312,19 @@ class OmniBarAPIServer:
                 print(f"🔄 Starting run {timestamp} with {model_info}")
                 print(f"📄 Processing PDF: {pdf_path.name} ({pdf_path.stat().st_size / 1024:.1f} KB)")
                 print(f"📁 Working directory: {Path.cwd()}")
+                print(f"🐍 Python executable: {python_exe}")
                 print(f"   Command: {' '.join(cmd[:8])}...")  # Don't log full command for security
 
                 # Set up environment
                 env = os.environ.copy()
                 if api_key and not use_ollama:
                     env['OPENAI_API_KEY'] = api_key
+
+                # Debug environment info
+                virtual_env = env.get('VIRTUAL_ENV', 'None')
+                python_path = env.get('PATH', 'Not set')[:100] + '...'  # First 100 chars
+                print(f"🔧 Virtual env: {virtual_env}")
+                print(f"🛤️  PATH (first 100): {python_path}")
 
                 process = subprocess.Popen(
                     cmd,
