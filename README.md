@@ -1,6 +1,12 @@
 # OmniBAR Prompt Optimization Workbench
+### Tested on MacOS 26.0
 
-A real-time web application for **prompt trace scoring** using OmniBAR to evaluate and optimize prompt performance through genetic-inspired mutation analysis.
+![Screenshot](assets/ollama_bar.png)
+A real-time web application for **prompt trace scoring** using OmniBAR to evaluate and optimize prompt performance through genetic-inspired mutation analysis. Users can perform agent prompt optimization with local models (requires Ollama) or an OpenAI API key.
+
+This example finds the optimal word choice and order for a document extraction prompt: reporting protein names and organisms on a publication page (`test.pdf`). The goal is to return two lists with `["protein_a", "protein_b", ...]` and `["organism_a, organism_b"]`. The input prompt is "mutated" by substituting words for their synonyms (`nltk`), at a user-defined level. Level one mutates maximum 1 word per prompt, Level 2, 2 words, and so on.
+
+The final outputs are histogram distributions showing the answers returned for each performance bracket: *Perfect, Excellent, Good, Poor*.
 
 ## 🎯 Problem Framing
 
@@ -13,20 +19,21 @@ This application implements a complete prompt optimization workbench that:
 - ✅ **Stores results** in SQLite database with full run history
 - ✅ **Displays history with filters** in an interactive dashboard
 
-**Use Case**: Protein extraction from research papers with algorithmic validation to replace unreliable LLM-as-Judge evaluation.
+**Use Case**: Protein extraction from research paper page with algorithmic validation, to replace unreliable LLM-as-Judge evaluation.
 
 ## 🚀 Quick Start
 
-### One-Command Launch
+### Quick Install/Launch (MacOS/Linux)
 ```bash
-python start_workbench.py
+git clone https://github.com/geoffitect/OmniBAR-POW.git
+cd OmniBAR-POW && chmod +x ./install_pow.sh && ./install_pow.sh
 ```
 
 This will:
-1. ✅ Check all dependencies
+1. ✅ Create/check the Python virtual env and check all dependencies
 2. 🚀 Start the Flask API server
 3. 🌐 Open the workbench in your browser at `http://localhost:8080`
-4. 📊 Connect to the SQLite database
+4. 📊 Connect to the example SQLite database (`examples/prompt_refiner_results.db`)
 
 ### Use the Workbench
 1. **Enter your prompt** in the text area (or use the default protein extraction prompt)
@@ -197,15 +204,15 @@ python start_workbench.py --no-browser
 - **Modern browsers** - Requires JavaScript and modern web standards
 
 ### Tradeoffs Made
-❌ **Multi-user authentication** - Cut to focus on core optimization functionality
-❌ **Cloud deployment** - Local-only to meet "runs locally" requirement
-❌ **Mobile responsive design** - Optimized for desktop research environment
-❌ **Real-time WebSocket streaming** - Used polling for simplicity and reliability
-❌ **Advanced analytics** - Focused on core mutation analysis vs. complex statistics
+**Multi-user authentication** - Cut to focus on core optimization functionality
+**Cloud deployment** - Local-only to meet "runs locally" requirement
+**Mobile responsive design** - Optimized for desktop research environment
+**Real-time WebSocket streaming** - Used polling for simplicity and reliability
+**Advanced analytics** - Focused on core mutation analysis vs. complex statistics
 
 ### Why These Tradeoffs
 1. **Time constraint** - 10-day deadline required focus on core functionality
-2. **Local requirement** - FSD spec emphasized "runs locally" over cloud features
+2. **Local requirement** - FSD assignment emphasized "runs locally" over cloud features
 3. **Demonstration scope** - Chose depth over breadth to show technical competency
 4. **Reliability over features** - Prioritized robust core functionality
 
@@ -223,20 +230,12 @@ python start_workbench.py --no-browser
 - **Documentation** - Extensive comments and docstrings
 - **Type hints** - Pydantic models with full type safety
 
-### Manual Testing Scenarios
-1. **Fresh installation** - Start from empty directory
-2. **Existing database** - Load and display previous runs
-3. **Process interruption** - Stop runs gracefully
-4. **API failures** - Handle backend disconnection
-5. **Invalid inputs** - Reject malformed prompts
-
 ## 📈 Results & Insights
 
 ### Sample Output (Protein Extraction)
 ```
 🟢 Perfect Score (100%): 67 variations
    source_6_root: Changed "source" to "root" → 1.000 score
-
 🔵 Excellent (80-99%): 23 variations
 🟡 Good (60-79%): 12 variations
 🔴 Poor (<60%): 8 variations
@@ -249,14 +248,14 @@ python start_workbench.py --no-browser
 
 ## 🔄 AI Assistant Usage
 
-**Claude Code was used extensively** throughout this project for:
+**Claude Code** was used throughout this project for:
 - **Architecture design** - Overall system structure and component interaction
 - **Code generation** - Frontend JavaScript, Python backend, visualization logic
 - **Problem solving** - Debugging hover tooltips, mutation notation, real-time updates
 - **Documentation** - README structure and technical writing
 
 **Generated sections include**:
-- Frontend HTML/CSS/JavaScript (~90% generated, 10% manual refinement)
+- Frontend HTML/CSS/JavaScript (~80% generated, 20% manual refinement)
 - Flask API server implementation (~80% generated, 20% manual debugging)
 - Visualization mutation notation (~95% generated, 5% manual tweaks)
 - This README content (~85% generated, 15% manual project-specific details)
@@ -274,7 +273,6 @@ Given more time, these features would add significant value:
 2. **Advanced analytics** - Statistical analysis of mutation patterns
 3. **Export capabilities** - CSV/JSON export of results
 4. **Custom validation models** - Support for domains beyond protein extraction
-5. **Collaborative features** - Team sharing and comparison tools
 
 ---
 
@@ -282,7 +280,7 @@ Given more time, these features would add significant value:
 
 For questions about this implementation or to run a demo, the application includes:
 - **Health check endpoint**: `http://localhost:8080/api/health`
-- **Complete API documentation** in `.dev/WORKBENCH_README.md`
+- **Complete API documentation** in `WORKBENCH_README.md`
 - **Comprehensive logs** in the browser console and server output
 
-The workbench is designed to guide reviewers to success with clear states, helpful error messages, and intuitive workflows.
+The workbench is designed to guide prompt engineers to success with clear states, helpful error messages, and intuitive workflows.
