@@ -1,0 +1,115 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omnibar"
+version = "0.1.2"
+description = "Comprehensive AI Agent Benchmarking Framework (OmniBAR)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    {name = "BrainGnosis", email = "dev@braingnosis.ai"},
+]
+maintainers = [
+    {name = "BrainGnosis", email = "dev@braingnosis.ai"},
+]
+keywords = [
+    "ai",
+    "agent", 
+    "benchmarking",
+    "evaluation",
+    "llm",
+    "testing",
+    "performance"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "langchain>=0.3.20,<0.4.0",
+    "langchain_core>=0.3.70,<0.4.0", 
+    "langchain_openai>=0.3.30,<0.4.0",
+    "numpy>=2.0.0,<3.0.0",
+    "pydantic>=2.10.0,<3.0.0",
+    "rich>=14.0.0,<15.0.0",
+    "tqdm>=4.60.0,<5.0.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+llm = [
+    "langchain>=0.3.20,<0.4.0",
+    "langchain-openai>=0.3.30,<0.4.0",
+    "langchain-core>=0.3.70,<0.4.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0", 
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.22.0",
+]
+all = ["omnibar[dev,docs,llm]"]
+
+[project.urls]
+Homepage = "https://github.com/BrainGnosis/OmniBAR"
+Repository = "https://github.com/BrainGnosis/OmniBAR"
+Documentation = "https://github.com/BrainGnosis/OmniBAR#readme"
+"Bug Tracker" = "https://github.com/BrainGnosis/OmniBAR/issues"
+
+[tool.setuptools.packages.find]
+include = ["omnibar*"]
+
+[tool.setuptools.package-data]
+omnibar = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+warn_no_return = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
