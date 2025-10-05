@@ -1,3 +1,4 @@
+dotenv
 flask
 flask_cors
 nltk
